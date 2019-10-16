@@ -1,0 +1,16 @@
+{
+  "all" : {
+    "in_dir" : "/Users/natem/storedAnalysis/maximilian/input",
+    "in_ext" : "fastq.gz",
+    "out_dir" : "/Users/natem/storedAnalysis/maximilian"
+  },
+  "generate_host_ref" : {
+    "host_ref_location" : "/Users/natem/storedAnalysis/maximilian/mosquitos/AAWU01.1.fsa_nt",
+    "host_ref_name" : "Culex_quinquefasciatus",
+    "host_ref_destination" : "/Users/natem/storedAnalysis/maximilian/mosquitos/"
+  },
+  "adaptor_trimming" : {
+    "trimmomatic_location" : "/Users/natem/storedAnalysis/maximilian/res/scripts/trimmomatic-0.39.jar",
+    "trimmomatic_options" : "ILLUMINACLIP:/Users/natem/storedAnalysis/maximilian/res/db/NexteraPE-PE.fa:1:30:10:4:true LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:60"
+  }
+}

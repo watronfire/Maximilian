@@ -4,6 +4,9 @@
     "in_ext" : "fastq.gz",
     "out_dir" : "/gpfs/home/natem/analysis/2019.10.16_max"
   },
+  "classify_reads" : {
+    "db_loc" : "/gpfs/group/andersen/zellerm/db/nr/nr"
+  },
   "deplete_host_reads" : {
     "bowtie_options" : "--sensitive --quiet --score-min C,60,0"
   },

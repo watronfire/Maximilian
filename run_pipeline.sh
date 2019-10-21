@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=120:00:00 -l nodes=1 -l mem=2gb -q workq -o /gpfs/home/natem/logs/snakelog.txt -j oe
+#PBS -l walltime=120:00:00 -l nodes=1 -l mem=2gb -q workq -o /gpfs/home/natem/logs/Maximilian.txt -j oe
 
 rm ~/logs/*.txt
 cd /gpfs/home/natem/scripts/Maximilian

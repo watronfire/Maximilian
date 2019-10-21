@@ -18,14 +18,56 @@ for f in os.listdir( in_dir ):
 
 rule all:
     input:
-        expand( os.path.join( out_dir, "assembled/{sample}/contigs.fasta" ), out_dir=out_dir, sample=SAMPLES )
+        expand( os.path.join( out_dir, "classified/{sample}.m8" ), out_dir=out_dir, sample=SAMPLES )
+
+rule classify_reads:
+    input:
+        scaffolds_singlets = os.path.join( out_dir, "assembled/{sample}/scaffolds_singlets.fasta" )
+    output:
+        matches = os.path.join( out_dir, "classified/{sample}.m8" )
+    shell:
+        "diamond blastx -d {config[classify_reads][db_loc]} -q {input.scaffolds_singlets} -o {output.matches}" 
+
+rule generate_singletons:
+    input:
+        scaffolds = os.path.join( out_dir, "assembled/{sample}/scaffolds.fasta" ),
+        corrected_r1 = os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R1_depleted.00.0_0.cor.fastq.gz" ),
+        corrected_r2 = os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R2_depleted.00.0_0.cor.fastq.gz" ),
+        corrected_unpaired = os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R_unpaired.00.0_0.cor.fastq.gz" )
+    output:
+        scaffolds_singlets = os.path.join( out_dir, "assembled/{sample}/scaffolds_singlets.fasta" ),
+        scaffold_aligned = temp( os.path.join( out_dir, "assembled/{sample}/scaffold_aligned.bam" ) ),
+        scaffold_unmapped = temp( os.path.join( out_dir, "assembled/{sample}/scaffold_unmapped.bam" ) ),
+        singlets_fasta = temp( os.path.join( out_dir, "assembled/{sample}/singlets.fasta" ) )
+    run:
+        depleted_index = os.path.join( os.path.dirname( input.scaffolds ), "scaffolds" )
+        build_command = "bowtie2-build {} {}".format( input.scaffolds, depleted_index )        
+        
+        map_command = "bowtie2 -x {} -1 {} -2 {} -U {} | samtools view -bS - > {}".format( depleted_index, input.corrected_r1, input.corrected_r2, input.corrected_unpaired, output.scaffold_aligned )
+
+        filter_command = "samtools view -b -f 12 -F 256 {} > {}".format( output.scaffold_aligned, output.scaffold_unmapped )
+        
+        fasta_command = "samtools fasta {} > {}".format( output.scaffold_unmapped, output.singlets_fasta )
+        
+        merge_command = "cat {} {} > {}".format( input.scaffolds, output.singlets_fasta, output.scaffolds_singlets )       
+
+        subprocess.call( "module load samtools", shell=True )
+        subprocess.call( "module load bowtie2", shell=True )
+        subprocess.call( build_command, shell=True )
+        subprocess.call( map_command, shell=True )
+        subprocess.call( filter_command, shell=True )
+        subprocess.call( fasta_command, shell=True )
+        subprocess.call( merge_command, shell=True )
 
 rule assemble_contigs:
     input:
         read1depleted = os.path.join( out_dir, "depleted/{sample}_R1_depleted.fastq" ),
         read2depleted = os.path.join( out_dir, "depleted/{sample}_R2_depleted.fastq" )
     output:
-        os.path.join( out_dir, "assembled/{sample}/contigs.fasta" )
+        os.path.join( out_dir, "assembled/{sample}/scaffolds.fasta" ),
+        os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R1_depleted.00.0_0.cor.fastq.gz" ),
+        os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R2_depleted.00.0_0.cor.fastq.gz" ),
+        os.path.join( out_dir, "assembled/{sample}/corrected/{sample}_R_unpaired.00.0_0.cor.fastq.gz" )
     run:
         command = "spades.py --meta -k 21,33,55,77 -1 {} -2 {} -o {}".format( input.read1depleted, input.read2depleted, os.path.join( out_dir, "assembled", wildcards.sample ) )
         subprocess.call( command, shell=True ) 

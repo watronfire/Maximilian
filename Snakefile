@@ -18,7 +18,16 @@ for f in os.listdir( in_dir ):
 
 rule all:
     input:
-        expand( os.path.join( out_dir, "classified/{sample}.m8" ), out_dir=out_dir, sample=SAMPLES )
+        expand( os.path.join( out_dir, "classified/{sample}.m8" ), out_dir=out_dir, sample=SAMPLES ),
+        os.path.join( out_dir, "output.krona.html" )
+
+rule convert_output:
+    input:
+        matches = expand( os.path.join( out_dir, "classified/{sample}.m8" ), sample=SAMPLES )
+    output: 
+        krona_output = os.path.join( out_dir, "output.krona.html" )
+    shell:
+        "ktImportBLAST {config[convert_output][krona_options]}  {input.matches} -o {output.krona_output} -tax {config[convert_output][tax_location]}"
 
 rule classify_reads:
     input:

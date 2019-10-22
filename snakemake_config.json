@@ -4,6 +4,10 @@
     "in_ext" : "fastq.gz",
     "out_dir" : "/gpfs/home/natem/analysis/2019.10.16_max"
   },
+  "convert_output" : {
+    "krona_options" : "-y 240",
+    "tax_location" : "/gpfs/home/natem/db/KronaDB"
+  },
   "classify_reads" : {
     "db_loc" : "/gpfs/group/andersen/zellerm/db/nr/nr"
   },

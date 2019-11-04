@@ -19,7 +19,8 @@ for f in os.listdir( in_dir ):
 rule all:
     input:
         expand( os.path.join( out_dir, "classified/{sample}.m8" ), out_dir=out_dir, sample=SAMPLES ),
-        os.path.join( out_dir, "output.krona.html" )
+        os.path.join( out_dir, "output.krona.html" ),
+        [os.path.join( out_dir, "reports/{}_fastqc.html".format( os.path.basename( os.path.splitext( os.path.splitext( item )[0] )[0]     ) ) ) for sublist in SAMPLES.values() for item in sublist]
 
 rule convert_output:
     input:
@@ -60,14 +61,15 @@ rule generate_singletons:
         
         merge_command = "cat {} {} > {}".format( input.scaffolds, output.singlets_fasta, output.scaffolds_singlets )       
 
-        subprocess.call( "module load samtools", shell=True )
-        subprocess.call( "module load bowtie2", shell=True )
-        subprocess.call( build_command, shell=True )
-        subprocess.call( map_command, shell=True )
-        subprocess.call( filter_command, shell=True )
-        subprocess.call( fasta_command, shell=True )
-        subprocess.call( merge_command, shell=True )
+        linked_command = " && ".join( ["module load samtools",
+                                       "module load bowtie2",
+                                       build_command,
+                                       map_command,
+                                       filter_command,
+                                       fasta_command,
+                                       merge_command] )
 
+        subprocess.call( linked_command, shell=True )
 rule assemble_contigs:
     input:
         read1depleted = os.path.join( out_dir, "depleted/{sample}_R1_depleted.fastq" ),
@@ -138,3 +140,14 @@ rule trim_adaptors:
         Path( output.read1unpaired ).touch()
         Path( output.read2trimmed ).touch()
         Path( output.read2unpaired ).touch()
+
+rule quality_control:
+    input:
+        reads = [os.path.join( "{in_dir}".format( in_dir = in_dir ), item ) for sublist in SAMPLES.values() for item in sublist]
+    params:
+        reports_location = os.path.join( out_dir, "reports" )
+    output:
+        reports = [os.path.join( out_dir, "reports/{}_fastqc.html".format( os.path.basename( os.path.splitext( os.path.splitext( item )[0] )[0] ) ) ) for sublist in SAMPLES.values() for item in sublist]
+    shell:
+        "module load fastqc &&"
+        "fastqc -o {params.reports_location} --nogroup {input.reads}"

@@ -1,8 +1,8 @@
 {
   "all" : {
-    "in_dir" : "/gpfs/group/andersen/raw_data/2019.10.15_MM",
+    "in_dir" : "/gpfs/group/andersen/raw_data/2019.10.31/fastqs",
     "in_ext" : "fastq.gz",
-    "out_dir" : "/gpfs/home/natem/analysis/2019.10.16_max"
+    "out_dir" : "/gpfs/home/natem/analysis/2019.10.31_max"
   },
   "convert_output" : {
     "krona_options" : "-y 240",

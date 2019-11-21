@@ -11,8 +11,16 @@
   "classify_reads" : {
     "db_loc" : "/gpfs/group/andersen/zellerm/db/nr/nr"
   },
+  "assemble_qc" : {
+    "quast_location" : "/gpfs/home/natem/scripts/quast-5.0.2/quast.py"
+  },
+  "identify_kraken" : {
+    "database_name" : "mosquito_diseases",
+    "blastdb" : "/gpfs/group/andersen/natem/db/blast_db/nr",
+    "threads" : "16"
+  },
   "deplete_host_reads" : {
-    "bowtie_options" : "--sensitive --quiet --score-min C,60,0"
+    "bowtie_options" : "--sensitive --score-min C,60,0"
   },
   "generate_host_ref" : {
     "host_ref_location" : "/gpfs/home/natem/db/mosquitos/AAWU01.1.fsa_nt",

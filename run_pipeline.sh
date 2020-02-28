@@ -5,4 +5,4 @@ export BLASTDB=/gpfs/group/andersen/natem/db/blast_db
 
 rm ~/logs/Maximilian.txt
 cd /gpfs/home/natem/scripts/Maximilian
-snakemake -k -j 50 --configfile=snakemake_config.json --cluster-config cluster.json --cluster "qsub -V -l walltime={cluster.walltime} -l mem={cluster.mem} -l nodes={cluster.n} -q {cluster.queue} -o {cluster.logfile} -j {cluster.stdout}"
+snakemake -k -j 50 --configfile=/gpfs/home/natem/analysis/2019.12.11_max/snakemake_config.json --cluster-config cluster.json --cluster "qsub -V -l walltime={cluster.walltime} -l mem={cluster.mem} -l nodes={cluster.n} -q {cluster.queue} -o {cluster.logfile} -j {cluster.stdout}"

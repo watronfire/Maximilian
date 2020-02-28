@@ -18,5 +18,8 @@
     "mem" : "16gb",
     "n" : "16",
     "walltime" : "24:00:00"
+  },
+  "assemble_contigs" : {
+    "walltime" : "5:00:00"
   }
 }

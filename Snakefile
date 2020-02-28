@@ -1,8 +1,9 @@
+# Adding functionality to classify all reads as singletons.
+
 import os
 from fnmatch import fnmatch
 import subprocess
 from pathlib import Path
-
 
 in_dir = config["all"]["in_dir"]
 in_ext = config["all"]["in_ext"]
@@ -21,7 +22,7 @@ rule all:
     input:
         expand( os.path.join( out_dir, "classified/{sample}.m8" ), out_dir=out_dir, sample=SAMPLES ),
         os.path.join( out_dir, "output.krona.html" ),
-        expand( os.path.join( out_dir, "blast/{sample}_blast.csv" ), sample=SAMPLES )
+        #expand( os.path.join( out_dir, "blast/{sample}_blast.csv" ), sample=SAMPLES )
         #os.path.join( out_dir, "multiqc_report.html" ),
         #expand( os.path.join( out_dir, "reports/{sample}/report.tsv"), out_dir=out_dir, sample=SAMPLES ),
         #[os.path.join( out_dir, "reports/{}_fastqc.html".format( os.path.basename( os.path.splitext( os.path.splitext( item )[0] )[0] ) ) ) for sublist in SAMPLES.values() for item in sublist]
@@ -47,13 +48,21 @@ rule convert_output:
         "ktImportBLAST {config[convert_output][krona_options]}  {input.matches} -o {output.krona_output} -tax {config[convert_output][tax_location]}"
 
 
+def classify_input( wildcards ):
+    if config["all"]["assemble"] == "False":
+        return os.path.join( out_dir, "assembled/{}/all_reads.fasta".format( wildcards.sample ) )
+    else:
+        return os.path.join( out_dir, "assembled/{}/scaffolds_singlets.fasta".format( wildcards.sample ) )
+
+# Diamond doesn't seem to work with python 3.6.3 so we remove it before runing the rule.
 rule classify_reads:
     input:
-        scaffolds_singlets = os.path.join( out_dir, "assembled/{sample}/scaffolds_singlets.fasta" )
+        classify_input
     output:
         matches = os.path.join( out_dir, "classified/{sample}.m8" )
     shell:
-        "diamond blastx -d {config[classify_reads][db_loc]} -q {input.scaffolds_singlets} -o {output.matches}" 
+        "module rm python/3.6.3 &&"
+        "diamond blastx -d {config[classify_reads][db_loc]} -q {input} -o {output.matches}" 
 
 
 rule generate_singletons:
@@ -90,14 +99,23 @@ rule generate_singletons:
 
         subprocess.call( linked_command, shell=True )
 
+rule generate_all_reads:
+    input:
+        sorteed = os.path.join( out_dir, "depleted/{sample}_sorted.bam" )
+    output:
+        reads = os.path.join( out_dir, "assembled/{sample}/all_reads.fasta" )
+    run:
+        fasta_command = "samtools fasta {} > {}".format( input.sorteed, output.reads )
+        linked_command = " && ".join( ["module load samtools", fasta_command] )
+        subprocess.call( linked_command, shell=True )
 
 rule assemble_qc:
     input:
         scaffolds = os.path.join( out_dir, "assembled/{sample}/scaffolds.fasta" )
     output:
-        report = os.path.join( out_dir, "reports/{sample}/report.tsv" )
+        reeport = os.path.join( out_dir, "reports/{sample}/report.tsv" )
     run:
-        quast_command = "{} {} -o {}".format( config["assemble_qc"]["quast_location"], input.scaffolds, os.path.dirname( output.report ) )
+        quast_command = "{} {} -o {}".format( config["assemble_qc"]["quast_location"], input.scaffolds, os.path.dirname( output.reeport ) )
         subprocess.call( quast_command, shell=True )
 
 
@@ -161,7 +179,7 @@ rule deplete_host_reads:
     output:
         host_aligned = temp( os.path.join( out_dir, "depleted/{sample}_aligned.bam" ) ),
         unmapped = temp( os.path.join( out_dir, "depleted/{sample}_unmapped.bam" ) ),
-        sorteed = temp( os.path.join( out_dir, "depleted/{sample}_sorted.bam" ) ),
+        sorteed = os.path.join( out_dir, "depleted/{sample}_sorted.bam" ),
         read1depleted = os.path.join( out_dir, "depleted/{sample}_R1_depleted.fastq" ),
         read2depleted = os.path.join( out_dir, "depleted/{sample}_R2_depleted.fastq" ),
         logfile = os.path.join( out_dir, "reports/{sample}_host_depletion.txt" )
@@ -196,16 +214,18 @@ rule trim_adaptors:
         read2unpaired = os.path.join( out_dir, "trimmed/{sample}_R2_unpaired.fastq" ),
         logfile = os.path.join( out_dir, "reports/{sample}_trimlog.txt" )
     run:
-        command = "java -Xmx2g -classpath {} org.usadellab.trimmomatic.TrimmomaticPE -threads 16 {read1} {read2} {read1trimmed} {read1unpaired} {read2trimmed} {read2unpaired} {options} -trimlog {logfile} ".format( config["adaptor_trimming"]["trimmomatic_location"],
-                                                                                                                                                                                        read1=input.read1,
-                                                                                                                                                                                        read2=input.read2,
-                                                                                                                                                                                        read1trimmed=output.read1trimmed,
-                                                                                                                                                                                        read1unpaired=output.read1unpaired,
-                                                                                                                                                                                        read2trimmed=output.read2trimmed,
-                                                                                                                                                                                        read2unpaired=output.read2unpaired,
-                                                                                                                                                                                        options=config["adaptor_trimming"]["trimmomatic_options"],
-                                        logfile=output.logfile )
-        subprocess.call( command, shell=True )
+        module_command = "module load trimmomatic"
+        command = "java -Xmx2g -jar {} PE -threads 16 {read1} {read2} {read1trimmed} {read1unpaired} {read2trimmed} {read2unpaired} {options} -trimlog {logfile} ".format( config["adaptor_trimming"]["trimmomatic_location"],
+                                                            read1=input.read1,
+                                                            read2=input.read2,
+                                                            read1trimmed=output.read1trimmed,
+                                                            read1unpaired=output.read1unpaired,
+                                                            read2trimmed=output.read2trimmed,
+                                                            read2unpaired=output.read2unpaired,
+                                                            options=config["adaptor_trimming"]["trimmomatic_options"],
+                                                            logfile=output.logfile )
+        
+        subprocess.call( module_command + " && " + command, shell=True )
         Path( output.read1trimmed ).touch()
         Path( output.read1unpaired ).touch()
         Path( output.read2trimmed ).touch()

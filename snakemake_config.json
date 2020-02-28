@@ -2,7 +2,8 @@
   "all" : {
     "in_dir" : "/gpfs/group/andersen/raw_data/2019.10.31/fastqs",
     "in_ext" : "fastq.gz",
-    "out_dir" : "/gpfs/home/natem/analysis/2019.10.31_max"
+    "out_dir" : "/gpfs/home/natem/analysis/2019.10.31_max",
+    "assemble" : "False"
   },
   "convert_output" : {
     "krona_options" : "-y 240",
@@ -28,7 +29,7 @@
     "host_ref_destination" : "/gpfs/home/natem/db/mosquitos"
   },
   "adaptor_trimming" : {
-    "trimmomatic_location" : "/gpfs/home/natem/scripts/zika-pipeline/variant_calling/scripts/trimmomatic-0.35.jar",
-    "trimmomatic_options" : "ILLUMINACLIP:/gpfs/home/natem/db/adaptors/NexteraPE-PE:1:30:10:4:true LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:60"
+    "trimmomatic_location" : "/gpfs/home/natem/scripts/Trimmomatic-0.39/trimmomatic-0.39.jar",
+    "trimmomatic_options" : "ILLUMINACLIP:/gpfs/home/natem/scripts/Trimmomatic-0.39/adapters/NexteraPE-PE.fa:1:30:10:4:true LEADING:20 TRAILING:20 SLIDINGWINDOW:4:25 MINLEN:60"
   }
 }
